@@ -19,17 +19,15 @@ def main():
         api_key=api_key,
     )
 
-    prompt = args.user_prompt
-    print(f"User prompt: {prompt}")
+    print(f"User prompt: {args.user_prompt}")
+
+    messages : List[dict[str, str]] = [
+        {"role": "user", "content": args.user_prompt},
+    ]
 
     response = client.chat.completions.create(
         model="openrouter/free",
-        messages=[
-            {
-                "role": "user",
-                "content": f"{prompt}",
-            }
-        ],
+        messages=messages,
     )
 
     if response.usage is not None:
