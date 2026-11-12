@@ -1,4 +1,5 @@
 import os
+from posixpath import isdir
 
 def get_files_info(working_directory: str, directory: str = ".") -> str:
     try:
@@ -13,6 +14,13 @@ def get_files_info(working_directory: str, directory: str = ".") -> str:
         if not os.path.isdir(target_dir):
             return f'Error: "{directory}" is not a directory'
 
-        return f'Success: "{directory}" is within the working directory'
+        files = []
+
+        for file in os.listdir(target_dir):
+            file_path = os.path.join(target_dir, file)
+            files.append(f"- {file}: file_size={os.path.getsize(file_path)} bytes, is_dir={os.path.isdir(file_path)}")
+
+        return "\n".join(files)
+
     except Exception as e:
         return f'Error: {e}'
