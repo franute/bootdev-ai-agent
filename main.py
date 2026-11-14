@@ -36,7 +36,7 @@ def main():
         model="openrouter/free",
         messages=messages,
         tools=available_functions,
-        temperature=0
+        #temperature=0
     )
 
     if response.usage is not None:
