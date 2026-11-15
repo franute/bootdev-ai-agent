@@ -32,32 +32,49 @@ def main():
         {"role": "user", "content": args.user_prompt},
     ]
 
-    response = client.chat.completions.create(
-        model="openrouter/free",
-        messages=messages,
-        tools=available_functions,
-        #temperature=0
-    )
+    final_response: bool = False
 
-    if response.usage is not None:
-        if args.verbose:
-            print(f"Prompt tokens: {response.usage.prompt_tokens}")
-            print(f"Response tokens: {response.usage.completion_tokens}")
+    for _ in range(20):
+        response = client.chat.completions.create(
+            model="openrouter/free",
+            messages=messages,
+            tools=available_functions,
+            #temperature=0
+        )
 
-    print(f"Response:\n{response.choices[0].message.content}")
-
-    if response.choices[0].message.tool_calls is not None:
-        for tool_call in response.choices[0].message.tool_calls:
-            function_args = json.loads(tool_call.function.arguments or "{}")
-            print(f"Calling function: {tool_call.function.name}({function_args})")
-            result_message = call_function(tool_call, function_args)
-
-            if result_message["content"] is None:
-                raise Exception("Empty content returned by function")
-
+        if response.usage is not None:
             if args.verbose:
-                print(f"-> {result_message['content']}")
+                print(f"Prompt tokens: {response.usage.prompt_tokens}")
+                print(f"Response tokens: {response.usage.completion_tokens}")
 
+        print(f"Response:\n{response.choices[0].message.content}")
+
+        response_message = response.choices[0].message
+        messages.append(response_message)
+
+        if not response_message.tool_calls:
+            final_response = True
+            print(f"-> {response_message}")
+            break
+        else:
+            for tool_call in response_message.tool_calls:
+                function_args = json.loads(tool_call.function.arguments or "{}")
+                print(f"Calling function: {tool_call.function.name}({function_args})")
+                result_message = call_function(tool_call, function_args)
+
+                if result_message["content"] is None:
+                    raise Exception("Empty content returned by function")
+
+                messages.append(result_message)
+
+                if args.verbose:
+                    print(f"-> {result_message['content']}")
+
+    if not final_response:
+        print("We couldn't reach a final answer to your prompt")
+        return 1
+
+    return 0
 
 if __name__ == "__main__":
     main()
